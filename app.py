@@ -90,5 +90,27 @@ def add_category():
 
     return index()
 
+@app.route('/search', methods=['GET', 'POST'])
+def search():
+    if request.method == 'POST':
+        search_query = request.form['search_query']
+        search_query_like = f"%{search_query}%"
+
+        search_tasks_query = """
+            SELECT tasks.id, tasks.title, tasks.description, categories.name as category_name 
+            FROM tasks 
+            INNER JOIN categories ON tasks.category_id = categories.id
+            WHERE tasks.title LIKE %s OR categories.name LIKE %s
+        """
+
+        cursor = mysql.connection.cursor()
+        cursor.execute(search_tasks_query, (search_query_like, search_query_like))
+        search_result = cursor.fetchall()
+        cursor.close()
+
+        return render_template('search.html', search_result=search_result, search_query=search_query)
+
+    return render_template('search.html')
+
 if __name__ == '__main__':
     app.run(debug=True)
